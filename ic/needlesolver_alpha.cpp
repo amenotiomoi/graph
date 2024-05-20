@@ -62,8 +62,88 @@ struct map {
       file.close();
    }
 } current;
+struct frac {
+   int a,b; // a/b
+   frac sp() {
+      if(a==0) return {0,1};
+      int v=__gcd(abs(a),abs(b));
+      return {(a*b<0?-1:1)*abs(a)/v,abs(b)/v};
+   }
+   frac operator+(const frac& v) const {return frac{a*v.b+b*v.a,b*v.b}.sp();}
+   frac operator-(const frac& v) const {return frac{a*v.b-b*v.a,b*v.b}.sp();}
+   frac operator*(const frac& v) const {return frac{a*v.a,b*v.b}.sp();}
+   frac operator/(const frac& v) const {return frac{a*v.b,b*v.a}.sp();}
+   bool operator==(const frac&v) const {return a*v.b==b*v.a;}
+   bool operator<(const frac& v) const {
+      if((a^v.a)<0) return a<v.a;
+      if(a<0) return -a*v.b>b*-v.a;
+      return a*v.b<b*v.a;
+   }
+};
+struct vsqrt {
+   int isqrt(int x){if(x==0)return 0;int a=1ll<<(__lg(x+1)/2+2),b=1ll<<(__lg(x+1)/2+1);while(a>b){a=b;b=(b+x/b)/2;}return a;}
+   frac a,b; // sqrt(a)+b
+   vsqrt sp() {
+      a=a.sp();b=b.sp();
+      if(a.a<0) return {a,b};
+      int v1=isqrt(a.a),v2=isqrt(a.b);
+      if(v1*v1==a.a&&v2*v2==a.b)
+         return {{0,1},(b+frac{v1,v2})};
+      return {a,b};
+   }
+   bool operator<(const vsqrt&v) const {
+      if(b==v.b) return a<v.a;
+      if(v.b<b&&v.a<(b-v.b)*(b-v.b)) {return false;}
+      frac t=v.b-b;t=(a-v.a-t*t)/(t+t);
+      if(t<frac{0,1}) return (b<v.b);
+      return (t*t<v.a)^(v.b<b);
+   }
+   bool operator==(const vsqrt&v) const {
+      return a==v.a&&b==v.b;
+   }
+};
+struct chtholly_tree {
+   set<pair<vsqrt,vsqrt>> tree;
+   set<pair<vsqrt,vsqrt>>::iterator check(vsqrt x) {
+      x=x.sp();
+      auto itr=tree.upper_bound({x,x});
+      if(itr!=tree.end()&&(*itr).first==x) return itr;
+      if(itr==tree.begin()) return tree.end();
+      return (*prev(itr)).second<x?tree.end():prev(itr);
+   }
+   bool insert(vsqrt l,vsqrt r) {
+      auto il=check(l);
+      auto ir=check(r);
+      if(il==tree.end()) {
+         if(ir==tree.end()) {
+            auto itr=tree.lower_bound({l,l});
+            while(itr!=tree.end()&&(*itr).second<r) itr=tree.erase(itr);
+            tree.insert({l,r});
+            return true;
+         }
+         auto itr=tree.lower_bound({l,l});
+         while(!(r<(*itr).second)) itr=tree.erase(itr);
+         vsqrt val=itr->second;
+         tree.erase(itr);
+         tree.insert({l,val});
+         return true;
+      }
+      if(ir==tree.end()) {
+         vsqrt val=il->first;
+         while(il!=tree.end()&&(*il).second<r) il=tree.erase(il);
+         tree.insert({val,r});
+         return true;
+      }
+      if(il==ir) return false;
+      vsqrt val1=il->first,val2=ir->second;
+      while(il!=tree.end()&&!(r<(*il).second)) il=tree.erase(il);
+      tree.insert({val1,val2});
+      return true;
+   }
+};
 struct pkid {
-   double y,leftx,rightx;
+   double y,speed;
+   double leftx,rightx;
    double speed;
    bool shiftdown,jump;
    static double sqr(double t) {return t*t;}
@@ -78,12 +158,16 @@ struct pkid {
             if(a.type==6||a.type==7) {nq=val;continue;}
             if(a.type==1) {
                double val=0;
-               if(a.y+0.565<=i.y&&i.y<a.y+0.615)
-                  val=sqrt(sqr(0.05)-sqr(i.y-1.205))+0.36375; // 上半部分的圆角
+               if(a.y+0.565<=i.y&&i.y<a.y+0.615) {
+                  val=sqrt(sqr(0.05)-sqr(i.y-0.565-a.y))+0.36375; // 上半部分的圆角
+                  if(sqr(0.05)-sqr(i.y-0.565-a.y)<=0) {nq.push_back(i);break;}
+               }
                if(a.y-0.390<=i.y&&i.y<a.y+0.565)
                   val=0.41375; // 中间的
-               if(a.y-0.440<=i.y&&i.y<a.y-0.390)
-                  val=sqrt(sqr(0.05)-sqr(i.y-0.250))+0.36375; // 下半部分的圆角
+               if(a.y-0.440<=i.y&&i.y<a.y-0.390) {
+                  val=sqrt(sqr(0.05)-sqr(i.y+0.39-a.y))+0.36375; // 下半部分的圆角
+                  if(sqr(0.05)-sqr(i.y+0.39-a.y)<=0) {nq.push_back(i);break;}
+               }
                if(i.leftx<=a.x-val&&i.rightx>=a.x+val) { // 判定区间为原解区间的子区间，此时出现断点
                   nq.push_back({i.y,i.leftx,a.x-val ,i.speed,i.shiftdown,i.jump});
                   nq.push_back({i.y,a.x+val,i.rightx,i.speed,i.shiftdown,i.jump});
@@ -160,8 +244,8 @@ string random_sentence() {
       "北落师门A是一颗年青的蓝色恒星,它的行星家族刚刚起步。Telltale 星座是一个清晰定义的旋转物质环,是绰号为“索伦之眼”尘埃盘的一部分。当岩石的体积越来越大,足以将松散的碎石拉成紧密的整体时,就形成了这个环。",
       "I don’t wanna waste my life to the game, I can’t explain how.",
       "这个东西是在 2024/04/25 开始做的,有兴趣的人可以算算纳豆鸽了多久.",
-      "探し出そう　君の答え 未来の地図片手に 間違いなど　怖れないで 僕らの道をゆこう 大地に咲く 旋律 メロディー\n小心叠批",
-      ""
+      "珂朵莉树为这份代码提高了一百倍的效率,而这远远超过大部分放置游戏单个升级的提升.",
+      
    };
    return Q[rand()%Q.size()];
 }
@@ -177,6 +261,7 @@ void input_help() {
    cout << "- REMOVEOBJ 删除一个物体" << endl;
    cout << "- OBJLIST 展示物体列表" << endl;
    cout << "- START 开始计算" << endl;
+   cout << "- LOG 更新日志" << endl;
 }
 void input_exit() {
    if(current.x!=0) {
@@ -310,7 +395,7 @@ void input_start() {
    } else {
       double lower=-0.0056,upper=0.005;
       int num=1;
-      for(double step=0.5;step>=0.01;step/=2,++num) {
+      for(double step=0.5;step>=0.5;step/=2,++num) {
          int cnt=1;
          for(double p=step;p<1;p+=step,++cnt) {
             double ya=p*(upper-lower)+lower;
@@ -377,6 +462,11 @@ void input_start() {
    }
    cout << endl;
 }
+void input_log() {
+   cout << "2024-04-25 开始制作" << endl;
+   cout << "2024-05-08 修复了对负数开平方导致 nan 的问题" << endl;
+   cout << "2024-05-16 使用珂朵莉树以减少搜索节点开销" << endl;
+}
 void checking(string t) {
    if(t=="HELP") input_help(); else
    if(t=="EXIT") {input_exit();exit(0);} else
@@ -389,6 +479,7 @@ void checking(string t) {
    if(t=="REMOVEOBJ") input_removeobj(); else
    if(t=="OBJLIST") input_objlist(); else
    if(t=="START") input_start(); else
+   if(t=="LOG") input_log(); else
    cout << "\'" << t << "\' 并不是一个可用的内部指令" << endl;
 }
 signed main() {
