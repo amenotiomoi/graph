@@ -405,15 +405,10 @@ void input_start() {
             if(Q.empty()) continue;
             while(left!=(int)Q.size()) {
                pkid t=Q[left].first;
-               // cout << "FROM ";
-               // Q[Q[left].second].first.show();
                left++;
                nodecnt++;
                if(rep_[{t.y,t.speed}].insert(t.leftx,t.rightx)==false) continue;
-               // t.show();
-                  // cout << "SUB" << endl;
                for(pkid i:t.nxt()) {
-                  // i.show();
                   if(t.y>=ender.y-frac{1,40}&&i.y<=ender.y-frac{1,40}) {
                      double L=ender.x.val()-0.41375,R=ender.x.val()+0.41375;
                      if(i.leftx<=L&&i.rightx>=L) {
@@ -455,9 +450,8 @@ void input_start() {
                         Q.push_back({j,left-1});
                   }
                }
-               // cout << "RSUB" << endl;
             }
-            // cout << num << "层, 进度：" << (frac{cnt,1}*step*frac{100,1}).val() << "% 累计节点: " << nodecnt << "                             \r";
+            cout << num << "层, 进度：" << (frac{cnt,1}*step*frac{100,1}).val() << "% 累计节点: " << nodecnt << "                             \r";
          }
       }
       cout << "在 " << nodecnt << " 个节点之后没有发现解" << endl;
