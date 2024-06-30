@@ -390,6 +390,7 @@ void input_start() {
       // double lower=-0.0056,upper=0.005;
       
    } else {
+      chrono::steady_clock::time_point start_time = chrono::steady_clock::now();
       frac lower=frac{-7,1250},upper=frac{1,200};
       int num=1;
       for(frac step=frac{1,2};step>=frac{1,2};step=step/frac{2,1},++num) {
@@ -435,6 +436,9 @@ void input_start() {
                            reverse(res.begin(),res.end());
                            cout << "ya/bh = " << ya.val() << endl;
                            cout << "共计搜索了 " << nodecnt << " 个节点" << endl;
+                           chrono::steady_clock::time_point end_time=chrono::steady_clock::now();
+                           chrono::milliseconds duration=chrono::duration_cast<chrono::milliseconds>(end_time-start_time);
+                           cout << "共计用时 " << duration.count() << " 毫秒" << endl;
                            cout << "找到长度为 " << res.size() << " 的解:" << endl;
                            cout << "ID\t\tLEFTX\t\tRIGHTX\t\tYPOS\t\tSPEED\t\tJUMP" << endl;
                            for(auto r:res) 
@@ -455,6 +459,9 @@ void input_start() {
          }
       }
       cout << "在 " << nodecnt << " 个节点之后没有发现解" << endl;
+      chrono::steady_clock::time_point end_time=chrono::steady_clock::now();
+      chrono::milliseconds duration=chrono::duration_cast<chrono::milliseconds>(end_time-start_time);
+      cout << "共计用时 " << duration.count() << " 毫秒" << endl;
    }
    cout << endl;
 }
