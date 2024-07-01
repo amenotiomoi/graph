@@ -194,7 +194,7 @@ struct pkid {
          pkid t=*this;
          t.shiftdown=false;
          t.speed=t.speed*frac{9,20};
-         result.push_back(t); // 左移一帧
+         result.push_back(t);
          // 解除时不刷新物理帧数。
       }
       if(jump) { // 此帧二段
