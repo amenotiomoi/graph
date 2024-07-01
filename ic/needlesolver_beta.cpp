@@ -178,8 +178,8 @@ struct pkid {
       vector<pkid> result;
       {
          pkid t=*this;
-         t.speed=fmax(frac{-829,100},t.speed);
          t.speed=t.speed-frac{29,100};
+         t.speed=fmax(frac{-829,100},t.speed);
          t.y=t.y+t.speed*frac{1,50};
          result.push_back(t); // 原地不动
          t.leftx+=0.06;
